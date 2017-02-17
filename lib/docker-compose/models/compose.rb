@@ -110,7 +110,7 @@ class Compose
 
     labels = @containers.keys if labels.empty?
 
-    containers = @containers.select { |key, value|
+    containers = @containers.keys.select { |key|
       labels.include?(key)
     }
 
