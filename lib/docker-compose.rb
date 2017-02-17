@@ -67,6 +67,7 @@ module DockerCompose
       name: attributes[1]['container_name'],
       image: attributes[1]['image'],
       build: attributes[1]['build'],
+      dockerfile: attributes[1]['dockerfile'],
       links: attributes[1]['links'],
       ports: attributes[1]['ports'],
       volumes: attributes[1]['volumes'],
@@ -87,7 +88,7 @@ module DockerCompose
       links:       info['HostConfig']['Links'],
       ports:       ComposeUtils.format_ports_from_running_container(info['NetworkSettings']['Ports']),
       volumes:     info['Config']['Volumes'],
-      command:     info['Config']['Cmd'].join(' '),
+      command:     (info['Config'].fetch('Cmd') || []).join(' '),
       environment: info['Config']['Env'],
       labels:      info['Config']['Labels'],
 

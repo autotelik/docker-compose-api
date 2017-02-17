@@ -13,6 +13,7 @@ class ComposeContainer
       name: hash_attributes[:full_name] || ComposeUtils.generate_container_name(hash_attributes[:name], hash_attributes[:label]),
       image: ComposeUtils.format_image(hash_attributes[:image]),
       build: hash_attributes[:build],
+      dockerfile: hash_attributes[:dockerfile],
       links: ComposeUtils.format_links(hash_attributes[:links]),
       ports: prepare_ports(hash_attributes[:ports]),
       volumes: hash_attributes[:volumes],
@@ -54,7 +55,10 @@ class ComposeContainer
       end
     elsif @attributes.key?(:build)
       @internal_image = SecureRandom.hex # Random name for image
-      Docker::Image.build_from_dir(@attributes[:build], {t: @internal_image})
+      opts = {t: @internal_image}
+      opts[:dockerfile] = @attributes[:dockerfile] if(@attributes[:dockerfile])
+
+      Docker::Image.build_from_dir(@attributes[:build], opts)
     end
   end
 

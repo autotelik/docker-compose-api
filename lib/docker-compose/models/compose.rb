@@ -107,6 +107,7 @@ class Compose
   private
 
   def call_container_method(method, labels = [])
+
     labels = @containers.keys if labels.empty?
 
     containers = @containers.select { |key, value|
