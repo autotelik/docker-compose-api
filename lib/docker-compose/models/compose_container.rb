@@ -22,6 +22,7 @@ class ComposeContainer
       labels: prepare_labels(hash_attributes[:labels])
     }.reject{ |key, value| value.nil? }
 
+
     # Docker client variables
     @internal_image = nil
     @container = docker_container
@@ -93,6 +94,7 @@ class ComposeContainer
     query_params = { 'name' => @attributes[:name] }
 
     params = container_config.merge(query_params)
+
     @container = Docker::Container.create(params)
   end
 

@@ -1,5 +1,6 @@
 require_relative 'docker-compose/models/compose'
 require_relative 'docker-compose/models/compose_container'
+require_relative 'docker-compose/exceptions'
 require_relative 'version'
 require_relative 'docker_compose_config'
 
@@ -62,37 +63,41 @@ module DockerCompose
   end
 
   def self.create_container(attributes)
+    service_config = attributes[1]
+
+    ComposeUtils.format_service_config(service_config)
+
     ComposeContainer.new({
-      label: attributes[0],
-      name: attributes[1]['container_name'],
-      image: attributes[1]['image'],
-      build: attributes[1]['build'],
-      dockerfile: attributes[1]['dockerfile'],
-      links: attributes[1]['links'],
-      ports: attributes[1]['ports'],
-      volumes: attributes[1]['volumes'],
-      command: attributes[1]['command'],
-      environment: attributes[1]['environment'],
-      labels: attributes[1]['labels']
-    })
+                             label: attributes[0],
+                             name: service_config['container_name'],
+                             image: service_config['image'],
+                             build: service_config['build'],
+                             dockerfile: service_config['dockerfile'],
+                             links: service_config['links'],
+                             ports: service_config['ports'],
+                             volumes: service_config['volumes'],
+                             command: service_config['command'],
+                             environment: service_config['environment'],
+                             labels: service_config['labels']
+                         })
   end
 
   def self.load_running_container(container)
     info = container.json
 
     container_args = {
-      label:       info['Name'].split(/_/)[1] || '',
-      full_name:   info['Name'],
-      image:       info['Image'],
-      build:       nil,
-      links:       info['HostConfig']['Links'],
-      ports:       ComposeUtils.format_ports_from_running_container(info['NetworkSettings']['Ports']),
-      volumes:     info['Config']['Volumes'],
-      command:     (info['Config'].fetch('Cmd') || []).join(' '),
-      environment: info['Config']['Env'],
-      labels:      info['Config']['Labels'],
+        label:       info['Name'].split(/_/)[1] || '',
+        full_name:   info['Name'],
+        image:       info['Image'],
+        build:       nil,
+        links:       info['HostConfig']['Links'],
+        ports:       ComposeUtils.format_ports_from_running_container(info['NetworkSettings']['Ports']),
+        volumes:     info['Config']['Volumes'],
+        command:     (info['Config'].fetch('Cmd') || []).join(' '),
+        environment: info['Config']['Env'],
+        labels:      info['Config']['Labels'],
 
-      loaded_from_environment: true
+        loaded_from_environment: true
     }
 
     ComposeContainer.new(container_args, container)

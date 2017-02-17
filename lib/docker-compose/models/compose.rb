@@ -110,13 +110,7 @@ class Compose
 
     labels = @containers.keys if labels.empty?
 
-    containers = @containers.keys.select { |key|
-      labels.include?(key)
-    }
-
-    containers.values.each do |entry|
-      entry.send(method)
-    end
+    @containers.each { |key, entry| entry.send(method) if labels.include?(key)  }
 
     true
   end

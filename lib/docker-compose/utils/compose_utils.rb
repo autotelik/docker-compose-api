@@ -54,6 +54,44 @@ module ComposeUtils
     command.nil? ? nil : command.split(' ')
   end
 
+
+  #
+  # Transform service config
+  # 1. Parse the whole config section and check for usage of
+  #    environment variables anywhere, and switch out for ENV value
+  #
+  def self.format_service_config(service_config)
+    env_var_reg_exp = Regexp.new( /.*\$\{(.*)\}.*/ )
+
+    service_config.each do |k, value|
+
+      if value.is_a?(Array)
+        service_config[k] = format_service_data(value)
+      elsif value.is_a?(Hash)
+        value.each {|k, v| value[k] = format_service_data(v) }
+
+        service_config[k] = value
+      else
+        service_config[k] = ENV[$1] if value.match(env_var_reg_exp)
+      end
+    end
+  end
+
+  #
+  # Transform service value
+  # 1. Check for usage of environment variables and switch out for ENV value
+  #
+  def self.format_service_data(value)
+    [*value].collect do |v|
+      if v.to_s.match(env_var_reg_exp)
+        raise DockerCompose::Exceptions::BadSubstitution, "No such EnvVar #{$1} - cannot substitute in #{value}" unless ENV[$1]
+        v.to_s.gsub("${#{$1}}", ENV[$1])
+      else
+        v
+      end
+    end
+  end
+
   #
   # Read a port specification in string format
   # and create a compose port structure
@@ -154,4 +192,13 @@ module ComposeUtils
   end
 
   private_class_method :next_available_id
+
+
+  class << self
+    private
+    def env_var_reg_exp
+      @env_var_reg_exp ||= Regexp.new( /.*\$\{(.*)\}.*/ )
+    end
+  end
+
 end
