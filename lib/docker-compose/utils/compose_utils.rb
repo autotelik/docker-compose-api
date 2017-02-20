@@ -60,36 +60,44 @@ module ComposeUtils
   # 1. Parse the whole config section and check for usage of
   #    environment variables anywhere, and switch out for ENV value
   #
-  def self.format_service_config(service_config)
-    env_var_reg_exp = Regexp.new( /.*\$\{(.*)\}.*/ )
+  def self.parse_env_variables(service_config)
 
-    service_config.each do |k, value|
+    parsed = service_config
 
-      if value.is_a?(Array)
-        service_config[k] = format_service_data(value)
-      elsif value.is_a?(Hash)
-        value.each {|k, v| value[k] = format_service_data(v) }
-
-        service_config[k] = value
-      else
-        service_config[k] = ENV[$1] if value.match(env_var_reg_exp)
-      end
+    parsed.each do |k, value|
+      parsed[k] = parse_service_config_entry(value)
     end
+
+    parsed
+  end
+
+  def self.parse_service_config_entry(value)
+
+    if value.is_a?(Array)
+      return value.collect { |v| parse_service_config_entry(v) }
+    elsif value.is_a?(Hash)
+      value.each {|k, v| value[k] = parse_service_config_entry(v) }
+      return value
+    end
+
+    format_service_data(value)
   end
 
   #
   # Transform service value
   # 1. Check for usage of environment variables and switch out for ENV value
   #
-  def self.format_service_data(value)
-    [*value].collect do |v|
-      if v.to_s.match(env_var_reg_exp)
-        raise DockerCompose::Exceptions::BadSubstitution, "No such EnvVar #{$1} - cannot substitute in #{value}" unless ENV[$1]
-        v.to_s.gsub("${#{$1}}", ENV[$1])
-      else
-        v
-      end
+  def self.format_service_data(node)
+    if node.to_s.match(env_var_reg_exp)
+      raise DockerCompose::Exceptions::BadSubstitution, "No such EnvVar #{$1} - cannot substitute #{node}" unless ENV[$1]
+      return node.to_s.gsub("${#{$1}}", ENV[$1])
     end
+
+    node
+  end
+
+  def self.env_var_reg_exp
+    @env_var_reg_exp ||= Regexp.new( /.*\$\{(.*)\}.*/ )
   end
 
   #

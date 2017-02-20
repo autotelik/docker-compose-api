@@ -22,7 +22,6 @@ class ComposeContainer
       labels: prepare_labels(hash_attributes[:labels])
     }.reject{ |key, value| value.nil? }
 
-
     # Docker client variables
     @internal_image = nil
     @container = docker_container

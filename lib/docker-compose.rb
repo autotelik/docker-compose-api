@@ -63,9 +63,8 @@ module DockerCompose
   end
 
   def self.create_container(attributes)
-    service_config = attributes[1]
 
-    ComposeUtils.format_service_config(service_config)
+    service_config = ComposeUtils.parse_env_variables(attributes[1])
 
     ComposeContainer.new({
                              label: attributes[0],
