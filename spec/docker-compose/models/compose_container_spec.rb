@@ -6,6 +6,7 @@ describe ComposeContainer do
       @attributes = {
         label: SecureRandom.hex,
         image: 'busybox:latest',
+        dockerfile: 'Dockerfile-rspec',
         name: SecureRandom.hex,
         links: ['service1:label', 'service2'],
         ports: ['3000', '8000:8000', '127.0.0.1:8001:8001'],
@@ -27,6 +28,7 @@ describe ComposeContainer do
       expect(@entry.attributes[:command]).to eq(@attributes[:command].split(' '))
       expect(@entry.attributes[:environment]).to eq(@attributes[:environment])
       expect(@entry.attributes[:labels]).to eq(@attributes[:labels])
+      expect(@entry.attributes[:dockerfile]).to eq(@attributes[:dockerfile])
     end
 
     it 'should map ports' do
@@ -152,6 +154,50 @@ describe ComposeContainer do
       #Start container
       @entry.start
       expect(@entry.running?).to be true
+
+      expect(@entry.stats).to_not be_nil
+
+      # Stop container
+      @entry.stop
+      expect(@entry.running?).to be false
+    end
+  end
+
+  context 'From explicit named Dockerfile' do
+    before(:all) do
+      @attributes = {
+          label: 'foobar',
+          build: File.expand_path('spec/docker-compose/fixtures/'),
+          dockerfile: 'Dockerfile-rspec',
+          links: ['links:links'],
+          volumes: ['/blah']
+      }
+
+      @entry = ComposeContainer.new(@attributes)
+    end
+
+    after(:all) do
+      Docker::Image.get(@entry.internal_image).remove(force: true)
+      @entry.delete
+    end
+
+    it 'should start/stop a container' do
+      #Start container
+      @entry.start
+      expect(@entry.running?).to be true
+
+      # Stop container
+      @entry.stop
+      expect(@entry.running?).to be false
+    end
+
+    it 'should provide container stats', duff: true do
+      #Start container
+      @entry.start
+      expect(@entry.running?).to be true
+
+      expect(@entry.container.json['Volumes']).to have_key '/blah'
+      expect(@entry.container.json['Config']['Cmd']).to eq ["ls", "/tmp"]
 
       expect(@entry.stats).to_not be_nil
 

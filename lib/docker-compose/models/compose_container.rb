@@ -28,6 +28,10 @@ class ComposeContainer
     @dependencies = []
   end
 
+  def name
+    @attributes[:name] || ""
+  end
+
   #
   # Returns true if is a container loaded from
   # environment instead compose file (i.e. a running container)

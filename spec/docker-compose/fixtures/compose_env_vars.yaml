@@ -1,0 +1,29 @@
+busyboxenv1:
+  image: busybox
+  container_name: busybox-container
+  ports:
+    - ${DOCKER_PORT_1}
+    - "8000:8000"
+    - "127.0.0.1:8001:8001"
+  expose:
+    - "5000"
+  links:
+    - busyboxenv2
+  command: ping busybox2
+  environment:
+    - MYENV1=${DOCKER_MYENV1_VALUE}
+  volumes:
+    - ${DOCKER_HOST_DATA_DIR}:/data
+  labels:
+    - com.example.foo=bar
+
+busyboxenv2:
+  image: ${DOCKER_IMAGE}
+  expose:
+    - "6000"
+  command: ping localhost
+  environment:
+    MYENV2: variable2
+  labels:
+    com.example.foo: bar
+  command: ping ${DOCKER_PING_TARGET}
